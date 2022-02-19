@@ -1,6 +1,7 @@
 require("dotenv").config()
 const express = require("express")
 const app = express()
+const postRouter = require("./routes/posts")
 
 //body 읽기
 app.use(express.json())
@@ -16,6 +17,9 @@ sequelize
   .catch((err) => {
     console.error(err)
   })
+
+//router 미들웨어
+app.use("/", postRouter)
 
 app.listen(3000, () => {
   console.log("서버 실행~~")
