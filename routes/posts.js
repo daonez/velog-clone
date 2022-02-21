@@ -48,5 +48,27 @@ router.patch("/post/:post_id", async (req, res) => {
 })
 
 //게시물 삭제하기
+router.delete("/post/:post_id", async (req, res) => {
+  try {
+    const { post_id } = req.params
+    const checkPostId = await Post.findOne({ where: { post_id } })
+
+    const deletePost = await checkPostId.destroy({
+      where: {
+        post_id,
+      },
+      //paranoid 가 deleteAt을 timestamp으로 만들어주기 때문에, 실제로 데이터베이스에서 삭제할라면 force:true한다.
+      force: true,
+    })
+
+    if (!deletePost) {
+      return res.status(403).send("존재하지 않는 포스트입니다.")
+    }
+
+    return res.status(200).json({ result: "success" })
+  } catch (e) {
+    console.error(e)
+  }
+})
 
 module.exports = router
