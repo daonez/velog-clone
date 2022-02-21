@@ -38,6 +38,7 @@ router.patch("/post/:post_id", async (req, res) => {
         content,
         img_url,
       },
+      //json객체 반환값으로 현재 업데이트된 문서를 보내기위해서 설정한다. plain은 기타내용제외 수정된정보만 원해서 설정.
       { returning: true, plain: true }
     )
 
