@@ -51,6 +51,7 @@ router.patch("/post/:post_id", async (req, res) => {
 router.delete("/post/:post_id", async (req, res) => {
   try {
     const { post_id } = req.params
+    //findOne 할필욘없음
     const checkPostId = await Post.findOne({ where: { post_id } })
 
     const deletePost = await checkPostId.destroy({
