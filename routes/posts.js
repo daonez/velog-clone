@@ -32,16 +32,16 @@ router.patch("/post/:post_id", async (req, res) => {
   try {
     const checkPostId = await Post.findOne({ where: { post_id } })
 
-    if (checkPostId == true) {
-      const updatedPost = await Post.update(
-        {
-          arributes: ["title", "content", "img_url"],
-        },
-        { where: { post_id } },
-        { returning: true }
-      )
-      res.status(200).json(updatedPost)
-    }
+    const updatedPost = await checkPostId.update(
+      {
+        title,
+        content,
+        img_url,
+      },
+      { returning: true, plain: true }
+    )
+
+    res.status(200).json(updatedPost)
   } catch (e) {
     console.log(e)
   }
