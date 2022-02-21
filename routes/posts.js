@@ -1,6 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const { Post, User, Comment } = require("../models/")
+const { upload } = require("../middleware/uploads")
 
 //메인페이지에 게시물 전체 가져오기
 // -추후 댓글/유저 닉네임? 가져오기 추가해야함.
@@ -34,13 +35,14 @@ router.get("/post/:post_id", async (req, res) => {
 })
 
 //게시물 작성하기
-router.post("/post", async (req, res) => {
+router.post("/post", upload.single("img_url"), async (req, res) => {
   //프론트가 보내는 정보들 (response들) body로 받아서 변수화
-  const { title, content, img_url } = req.body
+  const { title, content } = req.body
   //미들웨에어 따라 다르지만 res.local에 저장하면 사용자 찾기
   //const { user_id } = res.locals
 
   try {
+    const img_url = await req.file.location
     //DB에 Post 생성하기 위해서 create사용 (create과 save의 차이를 읽어보면 좋음)
     const post = await Post.create({
       //postId 는 자동으로 생성됨..model에 auto-increment있음
@@ -113,3 +115,22 @@ router.delete("/post/:post_id", async (req, res) => {
 })
 
 module.exports = router
+
+// 회원가입
+router.post("/join", async (req, res) => {
+  try {
+    //프론트가 주는 정보는 바디로 전달된다.
+    let { email, nickname, password } = req.body
+
+    //DB에 저장하기
+    await db.User.create({
+      email,
+      nickname,
+      password,
+    })
+
+    res.status(200).json({ msg: "회원가입성공" })
+  } catch (e) {
+    console.log(e)
+  }
+})
