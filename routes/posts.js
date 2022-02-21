@@ -1,6 +1,37 @@
 const express = require("express")
 const router = express.Router()
-const { Post } = require("../models/")
+const { Post, User, Comment } = require("../models/")
+
+//메인페이지에 게시물 전체 가져오기
+// -추후 댓글/유저 닉네임? 가져오기 추가해야함.
+router.get("/post", async (req, res) => {
+  try {
+    const posts = await Post.findAll({
+      attributes: ["post_id", "title", "img_url", "createdAt", "updatedAt"],
+    })
+    console.log(posts)
+    res.json(posts)
+  } catch (e) {
+    console.log(e)
+  }
+})
+
+//유저페이지 Myvelog 가져오기
+router.get("/post/me", async (req, res) => {
+  console.log("토큰필요함...")
+})
+
+//게시글 상세페에지
+
+router.get("/post/:post_id", async (req, res) => {
+  const { post_id } = req.params
+
+  const post = await Post.findOne({
+    where: { post_id },
+    attributes: ["post_id", "title", "img_url", "createdAt", "updatedAt"],
+  })
+  res.status(200).json(post)
+})
 
 //게시물 작성하기
 router.post("/post", async (req, res) => {
