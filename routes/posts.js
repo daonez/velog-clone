@@ -42,7 +42,7 @@ router.post("/post", upload.single("img_url"), async (req, res) => {
   //const { user_id } = res.locals
 
   try {
-    const { img_url } = await req.file.location
+    const img_url = await req.file.location
     //DB에 Post 생성하기 위해서 create사용 (create과 save의 차이를 읽어보면 좋음)
     const post = await Post.create({
       //postId 는 자동으로 생성됨..model에 auto-increment있음
