@@ -2,7 +2,7 @@ require("dotenv").config()
 const express = require("express")
 const app = express()
 const postRouter = require("./routes/posts")
-//const userRouter = require("./routes/users")
+const userRouter = require("./routes/users")
 
 //body 읽기
 app.use(express.json())
@@ -20,7 +20,7 @@ sequelize
   })
 
 //router 미들웨어
-app.use("/", [postRouter])
+app.use("/", [postRouter, userRouter])
 
 app.get("/", (req, res) => {
   res.send("hello world")

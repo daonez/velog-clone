@@ -115,22 +115,3 @@ router.delete("/post/:post_id", async (req, res) => {
 })
 
 module.exports = router
-
-// 회원가입
-router.post("/join", async (req, res) => {
-  try {
-    //프론트가 주는 정보는 바디로 전달된다.
-    let { email, nickname, password } = req.body
-
-    //DB에 저장하기
-    await db.User.create({
-      email,
-      nickname,
-      password,
-    })
-
-    res.status(200).json({ msg: "회원가입성공" })
-  } catch (e) {
-    console.log(e)
-  }
-})
