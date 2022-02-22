@@ -1,25 +1,62 @@
 const express = require("express")
 const router = express.Router()
-const { Post, User, Comment } = require("../models/")
-const { upload } = require("../middleware/uploads")
+const { Post, User, Comment, sequelize } = require("../models/")
+const { upload } = require("../middlewares/uploads")
+const authMiddleWare = require("../middlewares/auth")
 
 //메인페이지에 게시물 전체 가져오기
 // -추후 댓글/유저 닉네임? 가져오기 추가해야함.
+
 router.get("/post", async (req, res) => {
   try {
-    const posts = await Post.findAll({
-      attributes: ["post_id", "title", "img_url", "createdAt", "updatedAt"],
+    // 게시글 작성자 찾아오기
+    const user = await User.findAll({
+      raw: true,
     })
-    console.log(posts)
-    res.json(posts)
+    // 게시글 DB에서 불러오기
+    const posts = await Post.findAll({
+      raw: true,
+      include: [{ model: Comment, attributes: ["comment_id"] }],
+    })
+    //제일 최신날짜의 게시물이 앞으로 옴.
+    posts.sort((a, b) => b.createdAt - a.createdAt)
+
+    const mappedPosts = {
+      posts: posts.map((post) => {
+        return {
+          post,
+          nickname: user.find((item) => item.user_id === post.fk_user_id)["nickname"],
+        }
+      }),
+    }
+
+    res.status(200).json(mappedPosts)
   } catch (e) {
     console.log(e)
   }
 })
 
 //유저페이지 Myvelog 가져오기
-router.get("/post/me", async (req, res) => {
-  console.log("토큰필요함...")
+router.get("/post/me", authMiddleWare, async (req, res) => {
+  const { user_id } = res.locals.user
+
+  try {
+    //관계성 찾을때 include하면 해당모델까지 참조
+    const userPosts = await User.findAll({
+      where: { user_id },
+      raw: true,
+      attributes: ["nickname"],
+      include: [
+        { model: Post, attributes: ["post_id", "title", "content", "img_url", "createdAt"] },
+      ],
+    })
+    userPosts.sort((a, b) => b.createdAt - a.createdAt)
+    //console.log(userPosts)
+
+    res.status(200).json(userPosts)
+  } catch (e) {
+    console.log(e)
+  }
 })
 
 //게시글 상세페에지
@@ -30,19 +67,22 @@ router.get("/post/:post_id", async (req, res) => {
   const post = await Post.findOne({
     where: { post_id },
     attributes: ["post_id", "title", "img_url", "createdAt", "updatedAt"],
+    raw: true,
   })
   res.status(200).json(post)
 })
 
 //게시물 작성하기
-router.post("/post", upload.single("img_url"), async (req, res) => {
+router.post("/post", upload.single("img_url"), authMiddleWare, async (req, res) => {
   //프론트가 보내는 정보들 (response들) body로 받아서 변수화
-  const { title, content } = req.body
+  const { title, content, img_url } = req.body
   //미들웨에어 따라 다르지만 res.local에 저장하면 사용자 찾기
-  //const { user_id } = res.locals
+  const { email } = res.locals.user
 
+  const fk_user_id = await User.findOne({ where: { email }, raw: true })
+  console.log(fk_user_id)
   try {
-    const img_url = await req.file.location
+    //const img_url = await req.file.location
     //DB에 Post 생성하기 위해서 create사용 (create과 save의 차이를 읽어보면 좋음)
     const post = await Post.create({
       //postId 는 자동으로 생성됨..model에 auto-increment있음
@@ -50,7 +90,7 @@ router.post("/post", upload.single("img_url"), async (req, res) => {
       content,
       img_url,
       //userId는 로그인사용자꺼 가져와야함, 임시로 1로 지정..글쓸라면 유저를 참조해야해서 외래키를 지정해야함
-      fk_user_id: 1,
+      fk_user_id: fk_user_id.user_id,
     })
     //성공했으니가 201(created)상태표시 후 post변수 리턴
     res.status(201).json(post)
@@ -62,7 +102,7 @@ router.post("/post", upload.single("img_url"), async (req, res) => {
 
 //게시물 수정하기
 
-router.patch("/post/:post_id", async (req, res) => {
+router.patch("/post/:post_id", authMiddleWare, async (req, res) => {
   // post/1 등 <== /1을 가져와야하니까 req.params 사용
   const { post_id } = req.params
   // 프론트서 보내는 정보 req.body로 변수화
@@ -89,7 +129,7 @@ router.patch("/post/:post_id", async (req, res) => {
 })
 
 //게시물 삭제하기
-router.delete("/post/:post_id", async (req, res) => {
+router.delete("/post/:post_id", authMiddleWare, async (req, res) => {
   try {
     // 게시물 id 기준으로 삭제하기 때문에  req.params 함
     const { post_id } = req.params
@@ -111,26 +151,8 @@ router.delete("/post/:post_id", async (req, res) => {
     return res.status(200).json({ result: "success" })
   } catch (e) {
     console.error(e)
+    res.status(500).send()
   }
 })
 
 module.exports = router
-
-// 회원가입
-router.post("/join", async (req, res) => {
-  try {
-    //프론트가 주는 정보는 바디로 전달된다.
-    let { email, nickname, password } = req.body
-
-    //DB에 저장하기
-    await db.User.create({
-      email,
-      nickname,
-      password,
-    })
-
-    res.status(200).json({ msg: "회원가입성공" })
-  } catch (e) {
-    console.log(e)
-  }
-})
