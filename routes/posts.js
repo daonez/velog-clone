@@ -10,14 +10,20 @@ const authMiddleWare = require("../middlewares/auth")
 router.get("/post", async (req, res) => {
   try {
     // 게시글 작성자 찾아오기
-    const user = await User.findAll({ raw: true })
+    const user = await User.findAll({
+      raw: true,
+    })
     // 게시글 DB에서 불러오기
-    const posts = await Post.findAll({ raw: true })
+    const posts = await Post.findAll({
+      raw: true,
+    })
+    //제일 최신날짜의 게시물이 앞으로 옴.
+    posts.sort((a, b) => b.createdAt - a.createdAt)
     res.json({
       posts: posts.map((post) => {
         return {
           post,
-          email: user.find((item) => item.user_id === post.fk_user_id)["email"],
+          nickname: user.find((item) => item.user_id === post.fk_user_id)["nickname"],
         }
       }),
     })
@@ -40,6 +46,7 @@ router.get("/post/me", authMiddleWare, async (req, res) => {
         { model: Post, attributes: ["post_id", "title", "content", "img_url", "createdAt"] },
       ],
     })
+    userPosts.sort((a, b) => b.createdAt - a.createdAt)
     //console.log(userPosts)
 
     res.status(200).json(userPosts)
