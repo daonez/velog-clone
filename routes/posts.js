@@ -2,6 +2,7 @@ const express = require("express")
 const router = express.Router()
 const { Post, User, Comment } = require("../models/")
 const { upload } = require("../middleware/uploads")
+const authMiddleWare = require("../middleware/auth")
 
 //메인페이지에 게시물 전체 가져오기
 // -추후 댓글/유저 닉네임? 가져오기 추가해야함.
@@ -35,7 +36,7 @@ router.get("/post/:post_id", async (req, res) => {
 })
 
 //게시물 작성하기
-router.post("/post", upload.single("img_url"), async (req, res) => {
+router.post("/post", upload.single("img_url"), authMiddleWare, async (req, res) => {
   //프론트가 보내는 정보들 (response들) body로 받아서 변수화
   const { title, content } = req.body
   //미들웨에어 따라 다르지만 res.local에 저장하면 사용자 찾기
@@ -62,7 +63,7 @@ router.post("/post", upload.single("img_url"), async (req, res) => {
 
 //게시물 수정하기
 
-router.patch("/post/:post_id", async (req, res) => {
+router.patch("/post/:post_id", authMiddleWare, async (req, res) => {
   // post/1 등 <== /1을 가져와야하니까 req.params 사용
   const { post_id } = req.params
   // 프론트서 보내는 정보 req.body로 변수화
@@ -89,7 +90,7 @@ router.patch("/post/:post_id", async (req, res) => {
 })
 
 //게시물 삭제하기
-router.delete("/post/:post_id", async (req, res) => {
+router.delete("/post/:post_id", authMiddleWare, async (req, res) => {
   try {
     // 게시물 id 기준으로 삭제하기 때문에  req.params 함
     const { post_id } = req.params
@@ -111,6 +112,7 @@ router.delete("/post/:post_id", async (req, res) => {
     return res.status(200).json({ result: "success" })
   } catch (e) {
     console.error(e)
+    res.status(500).send()
   }
 })
 
