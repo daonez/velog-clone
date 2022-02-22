@@ -21,7 +21,24 @@ router.get("/post", async (req, res) => {
 
 //유저페이지 Myvelog 가져오기
 router.get("/post/me", authMiddleWare, async (req, res) => {
-  console.log("토큰필요함...")
+  const { user_id } = res.locals.user
+
+  try {
+    //관계성 찾을때 include하면 해당모델까지 참조
+    const userPosts = await User.findAll({
+      where: { user_id },
+      raw: true,
+      attributes: ["nickname"],
+      include: [
+        { model: Post, attributes: ["post_id", "title", "content", "img_url", "createdAt"] },
+      ],
+    })
+    //console.log(userPosts)
+
+    res.status(200).json(userPosts)
+  } catch (e) {
+    console.log(e)
+  }
 })
 
 //게시글 상세페에지
