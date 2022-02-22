@@ -1,6 +1,6 @@
 const express = require("express")
 const router = express.Router()
-const { Post, User, Comment } = require("../models/")
+const { Post, User, Comment, sequelize } = require("../models/")
 const { upload } = require("../middlewares/uploads")
 const authMiddleWare = require("../middlewares/auth")
 
@@ -16,17 +16,21 @@ router.get("/post", async (req, res) => {
     // 게시글 DB에서 불러오기
     const posts = await Post.findAll({
       raw: true,
+      include: [{ model: Comment, attributes: ["comment_id"] }],
     })
     //제일 최신날짜의 게시물이 앞으로 옴.
     posts.sort((a, b) => b.createdAt - a.createdAt)
-    res.json({
+
+    const mappedPosts = {
       posts: posts.map((post) => {
         return {
           post,
           nickname: user.find((item) => item.user_id === post.fk_user_id)["nickname"],
         }
       }),
-    })
+    }
+
+    res.status(200).json(mappedPosts)
   } catch (e) {
     console.log(e)
   }
