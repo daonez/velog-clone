@@ -1,8 +1,8 @@
 const express = require("express")
 const router = express.Router()
 const { Post, User, Comment } = require("../models/")
-const { upload } = require("../middleware/uploads")
-const authMiddleWare = require("../middleware/auth")
+const { upload } = require("../middlewares/uploads")
+const authMiddleWare = require("../middlewares/auth")
 
 //메인페이지에 게시물 전체 가져오기
 // -추후 댓글/유저 닉네임? 가져오기 추가해야함.
@@ -10,6 +10,7 @@ router.get("/post", async (req, res) => {
   try {
     const posts = await Post.findAll({
       attributes: ["post_id", "title", "img_url", "createdAt", "updatedAt"],
+      raw: true,
     })
     console.log(posts)
     res.json(posts)
@@ -19,7 +20,7 @@ router.get("/post", async (req, res) => {
 })
 
 //유저페이지 Myvelog 가져오기
-router.get("/post/me", async (req, res) => {
+router.get("/post/me", authMiddleWare, async (req, res) => {
   console.log("토큰필요함...")
 })
 
@@ -31,6 +32,7 @@ router.get("/post/:post_id", async (req, res) => {
   const post = await Post.findOne({
     where: { post_id },
     attributes: ["post_id", "title", "img_url", "createdAt", "updatedAt"],
+    raw: true,
   })
   res.status(200).json(post)
 })
@@ -38,12 +40,14 @@ router.get("/post/:post_id", async (req, res) => {
 //게시물 작성하기
 router.post("/post", upload.single("img_url"), authMiddleWare, async (req, res) => {
   //프론트가 보내는 정보들 (response들) body로 받아서 변수화
-  const { title, content } = req.body
+  const { title, content, img_url } = req.body
   //미들웨에어 따라 다르지만 res.local에 저장하면 사용자 찾기
-  //const { user_id } = res.locals
+  const { email } = res.locals.user
 
+  const fk_user_id = await User.findOne({ where: { email }, raw: true })
+  console.log(fk_user_id)
   try {
-    const img_url = await req.file.location
+    //const img_url = await req.file.location
     //DB에 Post 생성하기 위해서 create사용 (create과 save의 차이를 읽어보면 좋음)
     const post = await Post.create({
       //postId 는 자동으로 생성됨..model에 auto-increment있음
@@ -51,7 +55,7 @@ router.post("/post", upload.single("img_url"), authMiddleWare, async (req, res) 
       content,
       img_url,
       //userId는 로그인사용자꺼 가져와야함, 임시로 1로 지정..글쓸라면 유저를 참조해야해서 외래키를 지정해야함
-      fk_user_id: 1,
+      fk_user_id: fk_user_id.user_id,
     })
     //성공했으니가 201(created)상태표시 후 post변수 리턴
     res.status(201).json(post)
