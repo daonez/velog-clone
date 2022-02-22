@@ -6,14 +6,21 @@ const authMiddleWare = require("../middlewares/auth")
 
 //메인페이지에 게시물 전체 가져오기
 // -추후 댓글/유저 닉네임? 가져오기 추가해야함.
+
 router.get("/post", async (req, res) => {
   try {
-    const posts = await Post.findAll({
-      attributes: ["post_id", "title", "img_url", "createdAt", "updatedAt"],
-      raw: true,
+    // 게시글 작성자 찾아오기
+    const user = await User.findAll({ raw: true })
+    // 게시글 DB에서 불러오기
+    const posts = await Post.findAll({ raw: true })
+    res.json({
+      posts: posts.map((post) => {
+        return {
+          post,
+          email: user.find((item) => item.user_id === post.fk_user_id)["email"],
+        }
+      }),
     })
-    console.log(posts)
-    res.json(posts)
   } catch (e) {
     console.log(e)
   }
