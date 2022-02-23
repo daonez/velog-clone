@@ -1,11 +1,11 @@
-const { DB_LOCAL_PASSWORD } = process.env
+const { DB_LOCAL_PASSWORD, DB_IP } = process.env
 
 module.exports = {
   development: {
     username: "root",
     password: DB_LOCAL_PASSWORD,
     database: "velog_clone",
-    host: "127.0.0.1",
+    host: DB_IP,
     dialect: "mysql",
   },
   test: {

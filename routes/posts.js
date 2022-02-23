@@ -82,21 +82,18 @@ router.post("/post", upload.single("img_url"), authMiddleWare, async (req, res) 
   const fk_user_id = await User.findOne({ where: { email }, raw: true })
   console.log(fk_user_id)
   try {
-    if (img_url !== null) {
-      const img_url = await req.file.location
-      res.write(JSON.stringify(img_url))
-      //DB에 Post 생성하기 위해서 create사용 (create과 save의 차이를 읽어보면 좋음)
-      const post = await Post.create({
-        //postId 는 자동으로 생성됨..model에 auto-increment있음
-        title,
-        content,
-        img_url,
-        //userId는 로그인사용자꺼 가져와야함, 임시로 1로 지정..글쓸라면 유저를 참조해야해서 외래키를 지정해야함
-        fk_user_id: fk_user_id.user_id,
-      })
-      //성공했으니가 201(created)상태표시 후 post변수 리턴
-      res.status(201).json(post)
-    }
+    const img_url = await req.file.location
+    //DB에 Post 생성하기 위해서 create사용 (create과 save의 차이를 읽어보면 좋음)
+    const post = await Post.create({
+      //postId 는 자동으로 생성됨..model에 auto-increment있음
+      title,
+      content,
+      img_url,
+      //userId는 로그인사용자꺼 가져와야함, 임시로 1로 지정..글쓸라면 유저를 참조해야해서 외래키를 지정해야함
+      fk_user_id: fk_user_id.user_id,
+    })
+    //성공했으니가 201(created)상태표시 후 post변수 리턴
+    res.status(201).json(post)
   } catch (e) {
     console.log(e)
     res.status(400).send(e)
