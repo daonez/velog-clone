@@ -75,7 +75,7 @@ router.get("/post/:post_id", async (req, res) => {
 //게시물 작성하기
 router.post("/post", upload.single("img_url"), authMiddleWare, async (req, res) => {
   //프론트가 보내는 정보들 (response들) body로 받아서 변수화
-  const { title, content, img_url } = req.body
+  const { title, content } = req.body
   //미들웨에어 따라 다르지만 res.local에 저장하면 사용자 찾기
   const { email } = res.locals.user
 
